@@ -14,11 +14,14 @@ use HiEvents\DomainObjects\OrderDomainObject;
 use HiEvents\DomainObjects\PromoCodeDomainObject;
 use HiEvents\DomainObjects\Status\AffiliateStatus;
 use HiEvents\DomainObjects\Status\EventStatus;
+use HiEvents\DomainObjects\WidgetDomainObject;
 use HiEvents\Enterprise\Seating\Services\Domain\SeatClaimService;
 use HiEvents\Enterprise\Seating\Services\Domain\SeatingEventLockService;
+use HiEvents\Exceptions\EventNotOpenForOrdersException;
 use HiEvents\Repository\Interfaces\AffiliateRepositoryInterface;
 use HiEvents\Repository\Interfaces\EventRepositoryInterface;
 use HiEvents\Repository\Interfaces\PromoCodeRepositoryInterface;
+use HiEvents\Repository\Interfaces\WidgetRepositoryInterface;
 use HiEvents\Services\Application\Handlers\Order\DTO\CreateOrderPublicDTO;
 use HiEvents\Services\Domain\EventOccurrence\OccurrencePurchaseEligibilityService;
 use HiEvents\Services\Domain\Order\DTO\ProcessedOrderItemDTO;
@@ -30,7 +33,6 @@ use HiEvents\Services\Domain\Product\DTO\AvailableProductQuantitiesResponseDTO;
 use HiEvents\Services\Domain\PromoCode\PromoCodeUsageValidationService;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
-use Illuminate\Validation\UnauthorizedException;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -48,6 +50,7 @@ class CreateOrderHandler
         private readonly DatabaseManager $databaseManager,
         private readonly SeatClaimService $seatClaimService,
         private readonly SeatingEventLockService $seatingEventLock,
+        private readonly WidgetRepositoryInterface $widgetRepository,
     ) {}
 
     /**
@@ -73,6 +76,7 @@ class CreateOrderHandler
 
             $promoCode = $this->getPromoCode($createOrderPublicDTO, $eventId);
             $affiliate = $this->getAffiliate($createOrderPublicDTO, $eventId);
+            $widget = $this->getWidget($createOrderPublicDTO, $event);
 
             $this->validateProductAvailability($eventId, $createOrderPublicDTO);
 
@@ -84,6 +88,7 @@ class CreateOrderHandler
                 promoCode: $promoCode,
                 affiliate: $affiliate,
                 sessionId: $createOrderPublicDTO->session_identifier,
+                widget: $widget,
             );
 
             $orderItems = $this->orderItemProcessingService->process(
@@ -133,10 +138,32 @@ class CreateOrderHandler
         ]);
     }
 
+    private function getWidget(CreateOrderPublicDTO $createOrderPublicDTO, EventDomainObject $event): ?WidgetDomainObject
+    {
+        if ($createOrderPublicDTO->widget_id === null || trim($createOrderPublicDTO->widget_id) === '') {
+            return null;
+        }
+
+        return $this->widgetRepository->findForOrderAttribution(
+            shortId: trim($createOrderPublicDTO->widget_id),
+            eventId: $event->getId(),
+            organizerId: $event->getOrganizerId(),
+        );
+    }
+
+    /**
+     * @throws EventNotOpenForOrdersException
+     */
     public function validateEventStatus(EventDomainObject $event, CreateOrderPublicDTO $createOrderPublicDTO): void
     {
-        if (! $createOrderPublicDTO->is_user_authenticated && $event->getStatus() !== EventStatus::LIVE->name) {
-            throw new UnauthorizedException(
+        if ($event->getStatus() === EventStatus::PENDING_MANUAL_REVIEW->name) {
+            throw new EventNotOpenForOrdersException(
+                __('This event is not live.')
+            );
+        }
+
+        if (! $createOrderPublicDTO->can_order_unpublished_event && $event->getStatus() !== EventStatus::LIVE->name) {
+            throw new EventNotOpenForOrdersException(
                 __('This event is not live.')
             );
         }
@@ -217,6 +244,14 @@ class CreateOrderHandler
                     ]);
                 }
             }
+        }
+
+        $quantityByProductId = array_map(array_sum(...), $requestedQuantities);
+
+        if ($availability->firstOverflowingPool($quantityByProductId) !== null) {
+            throw ValidationException::withMessages([
+                'products' => __('Not enough products available. Please try again.'),
+            ]);
         }
     }
 

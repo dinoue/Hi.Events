@@ -13,6 +13,8 @@ class ProductPriceDomainObject extends Generated\ProductPriceDomainObjectAbstrac
 
     private ?float $priceBeforeDiscount = null;
 
+    private ?float $priceBeforeDiscountIncludingTaxesAndFees = null;
+
     private ?float $taxTotal = null;
 
     private ?float $feeTotal = null;
@@ -38,6 +40,18 @@ class ProductPriceDomainObject extends Generated\ProductPriceDomainObjectAbstrac
     public function setPriceBeforeDiscount(?float $originalPrice): ProductPriceDomainObject
     {
         $this->priceBeforeDiscount = $originalPrice;
+
+        return $this;
+    }
+
+    public function getPriceBeforeDiscountIncludingTaxesAndFees(): ?float
+    {
+        return $this->priceBeforeDiscountIncludingTaxesAndFees;
+    }
+
+    public function setPriceBeforeDiscountIncludingTaxesAndFees(?float $priceBeforeDiscountIncludingTaxesAndFees): self
+    {
+        $this->priceBeforeDiscountIncludingTaxesAndFees = $priceBeforeDiscountIncludingTaxesAndFees;
 
         return $this;
     }
@@ -81,6 +95,13 @@ class ProductPriceDomainObject extends Generated\ProductPriceDomainObjectAbstrac
     {
         return ! is_null($this->getSaleEndDate())
             && (new Carbon($this->getSaleEndDate()))->isPast();
+    }
+
+    public function isOnSale(): bool
+    {
+        return ! $this->getIsHidden()
+            && ! $this->isBeforeSaleStartDate()
+            && ! $this->isAfterSaleEndDate();
     }
 
     public function isSoldOut(): bool

@@ -262,6 +262,7 @@ class OrderCreateRequestValidationService
             'products.*.quantities.*.price' => 'numeric|min:0',
             'products.*.quantities.*.seat_uids' => 'array|max:100',
             'products.*.quantities.*.seat_uids.*' => 'string|max:24',
+            'widget_id' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -645,13 +646,7 @@ class OrderCreateRequestValidationService
 
     private function isPriceUnavailable(?ProductPriceDomainObject $price): bool
     {
-        if ($price === null) {
-            return true;
-        }
-
-        return $price->getIsHidden()
-            || $price->isBeforeSaleStartDate()
-            || $price->isAfterSaleEndDate();
+        return $price === null || ! $price->isOnSale();
     }
 
     /**

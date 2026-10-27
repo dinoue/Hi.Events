@@ -225,7 +225,7 @@ class CreateAttendeeHandler
     private function createOrder(int $eventId, CreateAttendeeDTO $attendeeDTO): OrderDomainObject
     {
         $event = $this->eventRepository->findById($eventId);
-        $total = Money::of($attendeeDTO->amount_paid, $event->getCurrency());
+        $total = Money::of((string) $attendeeDTO->amount_paid, $event->getCurrency());
 
         return $this->orderRepository->create(
             [
@@ -279,11 +279,12 @@ class CreateAttendeeHandler
         }
 
         $taxesAndFees = $this->taxAndFeeRepository->findWhereIn(
-            'id',
-            $attendeeDTO
+            field: 'id',
+            values: $attendeeDTO
                 ->taxes_and_fees
                 ->map(fn (CreateAttendeeTaxAndFeeDTO $taxAndFee) => $taxAndFee->tax_or_fee_id)
-                ->toArray()
+                ->toArray(),
+            additionalWhere: ['account_id' => $this->eventRepository->findById($attendeeDTO->event_id)->getAccountId()],
         );
 
         $validatedTaxesAndFees = collect();

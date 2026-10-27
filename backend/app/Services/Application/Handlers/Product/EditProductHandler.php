@@ -17,11 +17,13 @@ use HiEvents\Enterprise\Seating\Repository\Interfaces\EventSeatMapBandProductRep
 use HiEvents\Enterprise\Seating\Services\Domain\SeatedProductLookupService;
 use HiEvents\Events\CapacityChangedEvent;
 use HiEvents\Exceptions\CannotChangeProductTypeException;
+use HiEvents\Exceptions\ResourceNotFoundException;
 use HiEvents\Helper\DateHelper;
 use HiEvents\Repository\Eloquent\Value\Relationship;
 use HiEvents\Repository\Interfaces\EventRepositoryInterface;
 use HiEvents\Repository\Interfaces\ProductRepositoryInterface;
 use HiEvents\Services\Application\Handlers\Product\DTO\UpsertProductDTO;
+use HiEvents\Services\Domain\Event\EventSpamCheckDispatchService;
 use HiEvents\Services\Domain\Product\ProductAddonAssociationService;
 use HiEvents\Services\Domain\Product\ProductPriceUpdateService;
 use HiEvents\Services\Domain\ProductCategory\GetProductCategoryService;
@@ -52,6 +54,7 @@ class EditProductHandler
         private readonly DomainEventDispatcherService $domainEventDispatcherService,
         private readonly SeatedProductLookupService $seatedProductLookup,
         private readonly EventSeatMapBandProductRepositoryInterface $bandProductRepository,
+        private readonly EventSpamCheckDispatchService $eventSpamCheckDispatchService,
     ) {}
 
     /**
@@ -64,6 +67,10 @@ class EditProductHandler
                 'event_id' => $productsData->event_id,
                 'id' => $productsData->product_id,
             ];
+
+            if ($this->productRepository->findFirstWhere($where) === null) {
+                throw new ResourceNotFoundException(__('Product not found'));
+            }
 
             $oldPriceQuantities = $this->getExistingPriceQuantities($productsData->product_id);
 
@@ -102,6 +109,8 @@ class EditProductHandler
                 $productsData,
                 $oldPriceQuantities,
             );
+
+            $this->eventSpamCheckDispatchService->dispatchForEvent($productsData->event_id);
 
             return $this->productRepository
                 ->loadRelation(ProductPriceDomainObject::class)

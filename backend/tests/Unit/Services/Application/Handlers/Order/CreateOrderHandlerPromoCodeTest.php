@@ -13,6 +13,7 @@ use HiEvents\Enterprise\Seating\Services\Domain\SeatingEventLockService;
 use HiEvents\Repository\Interfaces\AffiliateRepositoryInterface;
 use HiEvents\Repository\Interfaces\EventRepositoryInterface;
 use HiEvents\Repository\Interfaces\PromoCodeRepositoryInterface;
+use HiEvents\Repository\Interfaces\WidgetRepositoryInterface;
 use HiEvents\Services\Application\Handlers\Order\CreateOrderHandler;
 use HiEvents\Services\Application\Handlers\Order\DTO\CreateOrderPublicDTO;
 use HiEvents\Services\Domain\EventOccurrence\OccurrencePurchaseEligibilityService;
@@ -62,6 +63,7 @@ class CreateOrderHandlerPromoCodeTest extends TestCase
         $event = Mockery::mock(EventDomainObject::class);
         $event->shouldReceive('getEventSettings')->andReturn($eventSettings);
         $event->shouldReceive('getCurrency')->andReturn('USD');
+        $event->shouldReceive('getStatus')->andReturn('LIVE');
 
         $eventRepository = Mockery::mock(EventRepositoryInterface::class);
         $eventRepository->shouldReceive('loadRelation')->andReturnSelf();
@@ -121,11 +123,12 @@ class CreateOrderHandlerPromoCodeTest extends TestCase
                 Mockery::mock(EventSeatMapLookupService::class)->shouldIgnoreMissing(),
                 Mockery::mock(SeatedProductLookupService::class)->shouldIgnoreMissing(),
             ),
+            Mockery::mock(WidgetRepositoryInterface::class),
         );
 
         $dto = new CreateOrderPublicDTO(
             products: collect(),
-            is_user_authenticated: true,
+            can_order_unpublished_event: true,
             session_identifier: 'sess-123',
             order_locale: 'en',
             promo_code: 'save50',

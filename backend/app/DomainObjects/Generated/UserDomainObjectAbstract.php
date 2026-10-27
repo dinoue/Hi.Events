@@ -49,13 +49,17 @@ abstract class UserDomainObjectAbstract extends AbstractDomainObject
 
     final public const TWO_FACTOR_LAST_USED_TIMESTEP = 'two_factor_last_used_timestep';
 
+    final public const LIFECYCLE_EMAILS_UNSUBSCRIBED_AT = 'lifecycle_emails_unsubscribed_at';
+
+    final public const TOKENS_VALID_AFTER = 'tokens_valid_after';
+
     protected int $id;
 
     protected string $email;
 
     protected ?string $email_verified_at = null;
 
-    protected string $password;
+    protected ?string $password = null;
 
     protected ?string $remember_token = null;
 
@@ -85,6 +89,10 @@ abstract class UserDomainObjectAbstract extends AbstractDomainObject
 
     protected ?int $two_factor_last_used_timestep = null;
 
+    protected ?string $lifecycle_emails_unsubscribed_at = null;
+
+    protected ?string $tokens_valid_after = null;
+
     public function toArray(): array
     {
         return [
@@ -106,6 +114,8 @@ abstract class UserDomainObjectAbstract extends AbstractDomainObject
             'two_factor_recovery_codes' => $this->two_factor_recovery_codes ?? null,
             'two_factor_confirmed_at' => $this->two_factor_confirmed_at ?? null,
             'two_factor_last_used_timestep' => $this->two_factor_last_used_timestep ?? null,
+            'lifecycle_emails_unsubscribed_at' => $this->lifecycle_emails_unsubscribed_at ?? null,
+            'tokens_valid_after' => $this->tokens_valid_after ?? null,
         ];
     }
 
@@ -145,14 +155,14 @@ abstract class UserDomainObjectAbstract extends AbstractDomainObject
         return $this->email_verified_at;
     }
 
-    public function setPassword(string $password): self
+    public function setPassword(?string $password): self
     {
         $this->password = $password;
 
         return $this;
     }
 
-    public function getPassword(): string
+    public function getPassword(): ?string
     {
         return $this->password;
     }
@@ -323,5 +333,29 @@ abstract class UserDomainObjectAbstract extends AbstractDomainObject
     public function getTwoFactorLastUsedTimestep(): ?int
     {
         return $this->two_factor_last_used_timestep;
+    }
+
+    public function setLifecycleEmailsUnsubscribedAt(?string $lifecycle_emails_unsubscribed_at): self
+    {
+        $this->lifecycle_emails_unsubscribed_at = $lifecycle_emails_unsubscribed_at;
+
+        return $this;
+    }
+
+    public function getLifecycleEmailsUnsubscribedAt(): ?string
+    {
+        return $this->lifecycle_emails_unsubscribed_at;
+    }
+
+    public function setTokensValidAfter(?string $tokens_valid_after): self
+    {
+        $this->tokens_valid_after = $tokens_valid_after;
+
+        return $this;
+    }
+
+    public function getTokensValidAfter(): ?string
+    {
+        return $this->tokens_valid_after;
     }
 }
