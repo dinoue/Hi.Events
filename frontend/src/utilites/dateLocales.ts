@@ -266,20 +266,6 @@ export const localeFormats: Record<SupportedLocales, {
         timezone: 'z',
         dateTimePicker: 'D MMM YYYY HH:mm'
     },
-    'ja': {
-        fullDateTime: 'YYYY年 M月 D日 (ddd) HH:mm',
-        shortDateTime: 'YYYY年 M月 D日 HH:mm',
-        shortDate: 'YYYY年 M月 D日',
-        chartDate: 'M月 D日',
-        weekdayDate: 'M月 D日 (ddd)',
-        dayMonthTime: 'M月 D日 HH:mm',
-        monthShort: 'M月',
-        dayOfMonth: 'D日',
-        dayName: 'M月 D日 dddd',
-        timeOnly: 'HH:mm',
-        timezone: 'z',
-        dateTimePicker: 'YYYY年 M月 D日 HH:mm'
-    },
     'ko': {
         fullDateTime: 'YYYY년 M월 D일 (ddd) A h:mm',
         shortDateTime: 'YYYY년 M월 D일 A h:mm',
