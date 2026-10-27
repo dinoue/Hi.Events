@@ -21,7 +21,6 @@ export type SupportedLocales =
     | "se"
     | "sk"
     | "el"
-    | "ja"
     | "ko"
     | "ja"
     | "fi";
@@ -46,7 +45,6 @@ export const localeToFlagEmojiMap: Record<SupportedLocales, string> = {
     se: '🇸🇪',
     sk: '🇸🇰',
     el: '🇬🇷',
-    ja: '🇯🇵',
     ko: '🇰🇷',
     ja: '🇯🇵',
     fi: '🇫🇮',
@@ -157,7 +155,6 @@ const dayjsLocaleLoaders: Partial<Record<SupportedLocales, () => Promise<unknown
     se: () => import("dayjs/locale/sv"),
     sk: () => import("dayjs/locale/sk"),
     el: () => import("dayjs/locale/el"),
-    ja: () => import("dayjs/locale/ja"),
     ko: () => import("dayjs/locale/ko"),
     ja: () => import("dayjs/locale/ja"),
     fi: () => import("dayjs/locale/fi"),
